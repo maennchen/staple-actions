@@ -17,6 +17,10 @@ inputs:
     description: "Optional prefix for the cache key"
     required: false
     default: ""
+  sarif:
+    description: "Upload the audit result to GitHub code scanning as SARIF. Code scanning needs GitHub Advanced Security on private repositories. Disable this on private repositories without a paid GitHub plan. Requires OTP 27 or later and the `security-events: write` permission."
+    required: false
+    default: "true"
 runs:
   using: "composite"
   steps:
@@ -26,9 +30,21 @@ runs:
         working-directory: ${{ inputs.working-directory }}
         use-cache: ${{ inputs.use-cache }}
         cache-prefix: ${{ inputs.cache-prefix }}
-    - run: mix hex.audit
+    - id: audit
+      run: |
+        if [ "$SARIF" = "true" ]; then
+          mix hex.audit --format sarif --output "$RUNNER_TEMP/hex-audit.sarif"
+        else
+          mix hex.audit
+        fi
       shell: bash
       env:
+        SARIF: ${{ inputs.sarif }}
         HEX_HOME: ${{ runner.temp }}/.hex
         MIX_HOME: ${{ runner.temp }}/.mix
       working-directory: "${{ inputs.working-directory }}"
+    - if: ${{ always() && inputs.sarif == 'true' && steps.audit.outcome != 'skipped' }}
+      uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+      with:
+        sarif_file: ${{ runner.temp }}/hex-audit.sarif
+        category: hex-audit

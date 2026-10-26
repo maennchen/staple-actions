@@ -45,7 +45,9 @@ Setup & dependency management:
   build artifacts a dep writes into `deps/` (e.g. a git dep that compiles a NIF
   into its Mix-symlinked `priv`) are carried by the build cache below instead.
 - `mix-deps-unlock` / `-composable` — `mix deps.unlock --check-unused`.
-- `mix-hex-audit` / `-composable` — `mix hex.audit`.
+- `mix-hex-audit` / `-composable` — `mix hex.audit`. Uploads the result to
+  GitHub code scanning as SARIF. Set `sarif: false` on private repositories
+  without GitHub Advanced Security.
 
 Compile & quality checks:
 
